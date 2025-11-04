@@ -2,11 +2,11 @@
   "version": 2,
   "builds": [
     {
-      "src": "public//*",
+      "src": "public/*",
       "use": "@vercel/static"
     },
     {
-      "src": "api//*.js",
+      "src": "api/*.js",
       "use": "@vercel/node"
     }
   ],
@@ -22,6 +22,6 @@
   ],
   "env": {
     "SUPABASE_URL": "https://hfxnwkzkkbxnzbzcoszh.supabase.co",
-    "SUPABASE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmeG53a3pra2J4bnpiemNvc3poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMzEyNDQsImV4cCI6MjA3NzgwNzI0NH0.GDmgpXY0cktxwldRMrCz7Yp4ZkZU35_ATdxs8yjOYSs"
+    "SUPABASE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmeG53a3pra2J4bnpiemNvc3poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMzEyNDQsImV4cCI6MjA3NzgwNzI0NH0.GDmgpXY0cktxwldRMrCz7Yp4ZkZU35_ATdxs8yjOYSsY"
   }
 }

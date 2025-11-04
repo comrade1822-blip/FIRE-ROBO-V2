@@ -1,72 +1,97 @@
-const { createClient } = require('@supabase/supabase-js');
+import { createClient } from '@supabase/supabase-js';
 
+// ==================== SUPABASE INITIALIZATION ====================
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_KEY
 );
 
-module.exports = async (req, res) => {
-  // Set CORS headers
+// ==================== MAIN HANDLER ====================
+export default async function handler(req, res) {
+  // ---- CORS HEADERS ----
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+  );
 
-  // Handle OPTIONS request
+  // ---- Handle Preflight ----
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
 
   try {
     const { robotId = 'FireBot_001' } = req.query;
 
+    // ==================== GET: Retrieve Robot Status ====================
     if (req.method === 'GET') {
-      // Get robot status
       const { data, error } = await supabase
         .from('robots')
         .select('*')
         .eq('robot_id', robotId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      
-      res.status(200).json(data || {
-        robot_id: robotId,
-        status: 'OFFLINE',
-        operation_mode: 'AUTO',
-        battery_level: 100,
-        fire_detected: false,
-        pump_active: false,
-        obstacle_angle: 90
-      });
 
-    } else if (req.method === 'POST') {
-      // Update robot status
-      const updateData = req.body;
-      
+      // Return default status if robot not found
+      if (!data) {
+        return res.status(200).json({
+          robot_id: robotId,
+          status: 'OFFLINE',
+          operation_mode: 'AUTO',
+          battery_level: 100,
+          fire_detected: false,
+          pump_active: false,
+          obstacle_angle: 90,
+          last_heartbeat: null
+        });
+      }
+
+      return res.status(200).json(data);
+    }
+
+    // ==================== POST: Update or Insert Robot Status ====================
+    else if (req.method === 'POST') {
+      let updateData = req.body;
+
+      // Vercel sends raw body by default; parse if string
+      if (typeof updateData === 'string') {
+        try {
+          updateData = JSON.parse(updateData);
+        } catch {
+          return res.status(400).json({ error: 'Invalid JSON body' });
+        }
+      }
+
+      // Add timestamp field
+      const payload = {
+        robot_id: robotId,
+        ...updateData,
+        last_heartbeat: new Date().toISOString(),
+      };
+
       const { data, error } = await supabase
         .from('robots')
-        .upsert({
-          robot_id: robotId,
-          ...updateData,
-          last_heartbeat: new Date().toISOString()
-        }, {
-          onConflict: 'robot_id'
-        });
+        .upsert(payload, { onConflict: 'robot_id' })
+        .select();
 
       if (error) throw error;
-      
-      res.status(200).json({ 
-        success: true, 
-        message: 'Robot status updated',
-        data 
+
+      return res.status(200).json({
+        success: true,
+        message: 'Robot status updated successfully',
+        data: data?.[0] || payload,
       });
-    } else {
-      res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    // ==================== INVALID METHOD ====================
+    else {
+      return res.status(405).json({ error: 'Method not allowed' });
     }
   } catch (error) {
-    console.error('API Error:', error);
-    res.status(500).json({ error: error.message });
+    console.error('❌ Robot Status API Error:', error);
+    return res.status(500).json({ error: error.message || 'Internal Server Error' });
   }
-};
+}

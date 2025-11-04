@@ -2,10 +2,18 @@
   "name": "fire-robot-dashboard",
   "version": "1.0.0",
   "description": "Fire Suppression Car Dashboard",
+  "type": "module",
   "scripts": {
-    "dev": "vercel dev"
+    "dev": "vercel dev",
+    "start": "node index.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.38.0"
+  },
+  "devDependencies": {
+    "vercel": "^29.0.0"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
